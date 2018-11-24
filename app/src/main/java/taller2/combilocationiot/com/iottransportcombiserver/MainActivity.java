@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -20,7 +21,14 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
+import java.io.IOException;
 import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import taller2.combilocationiot.com.iottransportcombiserver.API.IotRepositoryService;
+import taller2.combilocationiot.com.iottransportcombiserver.API.IotServiceFactory;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -30,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private String mLongitudeLabel;
     private TextView mLatitudeText;
     private TextView mLongitudeText;
+    private Button writeLocationButton;
     private FusedLocationProviderClient mFusedLocationClient;
 
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -43,12 +52,23 @@ public class MainActivity extends AppCompatActivity {
 
         mLatitudeLabel = "latitude";
         mLongitudeLabel = "longitude";
-        mLatitudeText = (TextView) findViewById((R.id.latitude_text));
-        mLongitudeText = (TextView) findViewById((R.id.longitude_text));
+        mLatitudeText =   findViewById((R.id.latitude_text));
+        mLongitudeText =  findViewById((R.id.longitude_text));
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-    }
 
+        writeLocationButton = findViewById(R.id.writeLocation);
+        writeLocationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    saveLocationInDb();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
 
     @Override
     public void onStart() {
@@ -130,8 +150,6 @@ public class MainActivity extends AppCompatActivity {
                 ActivityCompat.shouldShowRequestPermissionRationale(this,
                         Manifest.permission.ACCESS_FINE_LOCATION);
 
-        // Provide an additional rationale to the user. This would happen if the user denied the
-        // request previously, but didn't check the "Don't ask again" checkbox.
         if (shouldProvideRationale) {
             Log.i(TAG, "Displaying permission rationale to provide additional context.");
 
@@ -139,7 +157,6 @@ public class MainActivity extends AppCompatActivity {
                     new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            // Request permission
                             startLocationPermissionRequest();
                         }
                     });
@@ -174,4 +191,23 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
     }
+
+    private void saveLocationInDb() throws IOException {
+        IotServiceFactory.getApiService()
+                        .writeSample("54", "45", "2018-11-24 11:31:13")
+                        .enqueue(new Callback<String>() {
+                            @Override
+                            public void onResponse(Call<String> call, Response<String> response) {
+                                if(response.isSuccessful()) {
+                                    Log.i(TAG, "OK WRITE LOCATION!" + response.body().toString());
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Call<String> call, Throwable t) {
+                                Log.e(TAG, "Unable to submit location");
+                            }
+                        });
+    }
+
 }
