@@ -24,11 +24,14 @@ import com.google.android.gms.tasks.Task;
 import java.io.IOException;
 import java.util.Locale;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import taller2.combilocationiot.com.iottransportcombiserver.API.IotRepositoryService;
-import taller2.combilocationiot.com.iottransportcombiserver.API.IotServiceFactory;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -193,21 +196,34 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void saveLocationInDb() throws IOException {
-        IotServiceFactory.getApiService()
-                        .writeSample("54", "45", "2018-11-24 11:31:13")
-                        .enqueue(new Callback<String>() {
-                            @Override
-                            public void onResponse(Call<String> call, Response<String> response) {
-                                if(response.isSuccessful()) {
-                                    Log.i(TAG, "OK WRITE LOCATION!" + response.body().toString());
-                                }
-                            }
 
-                            @Override
-                            public void onFailure(Call<String> call, Throwable t) {
-                                Log.e(TAG, "Unable to submit location");
-                            }
-                        });
+        OkHttpClient client = new OkHttpClient();
+
+        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
+        RequestBody body = RequestBody.create(mediaType, "latitude=222&longitude=333&datetime=2018-12-01%2018%3A33%3A33&undefined=");
+        Request request = new Request.Builder()
+                .url("http://192.168.0.121:8888/writesample")
+                .post(body)
+                .addHeader("Content-Type", "application/x-www-form-urlencoded")
+                .addHeader("cache-control", "no-cache")
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, final Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+                } else {
+                }
+            }
+    });
+
     }
 
 }
+
