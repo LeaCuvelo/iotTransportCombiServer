@@ -4,7 +4,9 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationListener;
 import android.net.Uri;
+import android.os.Handler;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -22,6 +24,11 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
 import okhttp3.Call;
@@ -33,35 +40,58 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LocationListener {
 
     protected Location mLastLocation;
 
-    private String mLatitudeLabel;
-    private String mLongitudeLabel;
+    private String mLatitudeValue;
+    private String mLongitudeValue;
     private TextView mLatitudeText;
     private TextView mLongitudeText;
     private Button writeLocationButton;
+    private OkHttpClient client;
     private FusedLocationProviderClient mFusedLocationClient;
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 
+    Handler handler = new Handler();
+    String stringDateTime;
+
+    private Runnable runnableCode = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                saveLocationInDb();
+                getLastLocation();
+                handler.postDelayed(this, 5000);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mLatitudeLabel = "latitude";
-        mLongitudeLabel = "longitude";
+        mLatitudeValue = "latitude";
+        mLongitudeValue = "longitude";
         mLatitudeText =   findViewById((R.id.latitude_text));
         mLongitudeText =  findViewById((R.id.longitude_text));
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        writeLocationButton = findViewById(R.id.writeLocation);
-        writeLocationButton.setOnClickListener(new View.OnClickListener() {
+        client = new OkHttpClient();
+
+        handler.postDelayed(runnableCode, 5000);
+
+
+
+        //writeLocationButton = findViewById(R.id.writeLocation);
+       /* writeLocationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
@@ -70,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
-        });
+        });*/
     }
 
     @Override
@@ -179,10 +209,10 @@ public class MainActivity extends AppCompatActivity {
                             mLastLocation = task.getResult();
 
                             mLatitudeText.setText(String.format(Locale.ENGLISH, "%s: %f",
-                                    mLatitudeLabel,
+                                    mLatitudeValue,
                                     mLastLocation.getLatitude()));
                             mLongitudeText.setText(String.format(Locale.ENGLISH, "%s: %f",
-                                    mLongitudeLabel,
+                                    mLongitudeValue,
                                     mLastLocation.getLongitude()));
                         } else {
                             Log.w(TAG, "getLastLocation:exception", task.getException());
@@ -194,33 +224,64 @@ public class MainActivity extends AppCompatActivity {
 
     private void saveLocationInDb() throws IOException {
 
-        OkHttpClient client = new OkHttpClient();
+        if(mLatitudeValue != null && !mLatitudeValue.isEmpty()  && mLongitudeValue != null && !mLongitudeValue.isEmpty()){
 
-        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
-        RequestBody body = RequestBody.create(mediaType, "latitude=222&longitude=333&datetime=2018-12-01%2018%3A33%3A33&undefined=");
-        Request request = new Request.Builder()
-                .url("http://192.168.0.121:8888/writesample")
-                .post(body)
-                .addHeader("Content-Type", "application/x-www-form-urlencoded")
-                .addHeader("cache-control", "no-cache")
-                .build();
+            Date currentDateTime = Calendar.getInstance().getTime();
 
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-            }
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
+            stringDateTime = df.format(currentDateTime);
+            String valueString = "latitude="+
+                    mLastLocation.getLatitude()+
+                    "&longitude="+
+                    mLastLocation.getLongitude()+
+                    "&datetime=2018-11-29%2018%3A33%3A33&undefined=";
 
-            @Override
-            public void onResponse(Call call, final Response response) throws IOException {
-                if (!response.isSuccessful()) {
-                    throw new IOException("Unexpected code " + response);
-                } else {
+            MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
+
+            RequestBody body = RequestBody.create(mediaType, valueString);
+
+            Request request = new Request.Builder()
+                    .url("http://192.168.0.121:8888/writesample")
+                    .post(body)
+                    .addHeader("Content-Type", "application/x-www-form-urlencoded")
+                    .addHeader("cache-control", "no-cache")
+                    .build();
+
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    e.printStackTrace();
                 }
-            }
-    });
+
+                @Override
+                public void onResponse(Call call, final Response response) throws IOException {
+                    if (!response.isSuccessful()) {
+                        throw new IOException("Unexpected code " + response);
+                    } else {
+                    }
+                }
+            });
+        }
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
 
     }
 
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+
+    }
 }
 
