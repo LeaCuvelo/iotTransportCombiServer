@@ -40,7 +40,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 
-public class MainActivity extends AppCompatActivity implements LocationListener {
+public class MainActivity extends AppCompatActivity {
 
     protected Location mLastLocation;
 
@@ -48,7 +48,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private String mLongitudeValue;
     private TextView mLatitudeText;
     private TextView mLongitudeText;
-    private Button writeLocationButton;
     private OkHttpClient client;
     private FusedLocationProviderClient mFusedLocationClient;
 
@@ -65,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             try {
                 saveLocationInDb();
                 getLastLocation();
-                handler.postDelayed(this, 5000);
+                handler.postDelayed(this, 2000);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -86,7 +85,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
         client = new OkHttpClient();
 
-        handler.postDelayed(runnableCode, 5000);
+        handler.postDelayed(runnableCode, 2000);
 
 
 
@@ -262,26 +261,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                 }
             });
         }
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
     }
 }
 
