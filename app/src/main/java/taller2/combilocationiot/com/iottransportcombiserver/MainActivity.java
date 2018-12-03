@@ -87,19 +87,6 @@ public class MainActivity extends AppCompatActivity {
 
         handler.postDelayed(runnableCode, 2000);
 
-
-
-        //writeLocationButton = findViewById(R.id.writeLocation);
-       /* writeLocationButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    saveLocationInDb();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });*/
     }
 
     @Override
@@ -117,27 +104,12 @@ public class MainActivity extends AppCompatActivity {
                 int requestCode,
                 @NonNull String[] permissions,
                 @NonNull int[] grantResults) {
-        Log.i(TAG, "onRequestPermissionResult");
         if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
             if (grantResults.length <= 0) {
-                // If user interaction was interrupted, the permission request is cancelled and you
-                // receive empty arrays.
                 Log.i(TAG, "User interaction was cancelled.");
             } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted.
                 getLastLocation();
             } else {
-                // Permission denied.
-
-                // Notify the user via a SnackBar that they have rejected a core permission for the
-                // app, which makes the Activity useless. In a real app, core permissions would
-                // typically be best requested during a welcome-screen flow.
-
-                // Additionally, it is important to remember that a permission might have been
-                // rejected without asking the user for permission (device policy or "Never ask
-                // again" prompts). Therefore, a user interface affordance is typically implemented
-                // when permissions are denied. Otherwise, your app could appear unresponsive to
-                // touches or interactions which have required permissions.
                 showSnackbar(R.string.textwarn, R.string.settings,
                         new View.OnClickListener() {
                             @Override
@@ -254,6 +226,7 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onResponse(Call call, final Response response) throws IOException {
+                    Log.i("-->Saved in DB: ", "Latitude: " + mLastLocation.getLatitude() + "Longitude: " + mLastLocation.getLongitude());
                     if (!response.isSuccessful()) {
                         throw new IOException("Unexpected code " + response);
                     } else {
